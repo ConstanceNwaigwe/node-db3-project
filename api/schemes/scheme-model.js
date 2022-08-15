@@ -1,7 +1,9 @@
+const db = require('../../data/db-config');
 function find() { // EXERCISE A
   /*
     1A- Study the SQL query below running it in SQLite Studio against `data/schemes.db3`.
     What happens if we change from a LEFT join to an INNER join?
+    inner join dosen't include the schemes with 0 steps which was "Have fun!".
 
       SELECT
           sc.*,
@@ -15,6 +17,12 @@ function find() { // EXERCISE A
     2A- When you have a grasp on the query go ahead and build it in Knex.
     Return from this function the resulting dataset.
   */
+  const findall = db('schemes as sc')
+  .leftJoin('steps as st', 'sc.scheme_id', '=', 'st.scheme_id')
+  .select('sc.*', 'count(st.step_id) as number_of_steps')
+  .groupBy('sc.scheme_id').orderBy('sc.scheme_id ASC')
+
+  return findall;
 }
 
 function findById(scheme_id) { // EXERCISE B
@@ -83,6 +91,13 @@ function findById(scheme_id) { // EXERCISE B
         "steps": []
       }
   */
+ const findid = db('schemes as sc')
+  .leftJoin('steps as st', 'sc.scheme_id', '=', 'st.scheme_id')
+  .select('sc.scheme_name','sc.*')
+  .where('sc.scheme_id', scheme_id)
+  .orderBy('st.step_number ASC')
+
+  return findid;
 }
 
 function findSteps(scheme_id) { // EXERCISE C
@@ -106,12 +121,21 @@ function findSteps(scheme_id) { // EXERCISE C
         }
       ]
   */
+ const findstep = db('schemes as sc')
+  .leftJoin('steps as st', 'sc.scheme_id', '=', 'st.scheme_id')
+  .select('sc.scheme_name','sc.*')
+  .where('sc.scheme_id', scheme_id)
+  .orderBy('st.step_number ASC')
+
+  return findstep;
 }
 
-function add(scheme) { // EXERCISE D
+function add (scheme) { // EXERCISE D
   /*
     1D- This function creates a new scheme and resolves to _the newly created scheme_.
   */
+ const [id] = db('schemes').insert(scheme)
+ return findById(id)
 }
 
 function addStep(scheme_id, step) { // EXERCISE E
@@ -120,6 +144,8 @@ function addStep(scheme_id, step) { // EXERCISE E
     and resolves to _all the steps_ belonging to the given `scheme_id`,
     including the newly created one.
   */
+ const [id] = findById(scheme_id).insert(step)
+ return findSteps(id)
 }
 
 module.exports = {
